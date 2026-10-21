@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Khung Chat Thử Nghiệm</title>
+    <style>
+      /* Phần CSS định dạng giao diện */
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f2f5;
+      }
+      .chat-section {
+        width: 350px;
+        border: 1px solid #ccc;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .chat-box {
+        height: 350px;
+        padding: 15px;
+        overflow-y: auto;
+        background: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+      }
+      .message {
+        margin-bottom: 10px;
+        padding: 10px 14px;
+        border-radius: 18px;
+        max-width: 75%;
+        word-wrap: break-word;
+        font-size: 14px;
+      }
+      .received {
+        background: #e4e6eb;
+        color: black;
+        align-self: flex-start;
+      }
+      .sent {
+        background: #0084ff;
+        color: white;
+        align-self: flex-end;
+      }
+      .chat-input-area {
+        display: flex;
+        border-top: 1px solid #eee;
+        padding: 10px;
+        background: white;
+      }
+      .chat-input-area input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        outline: none;
+        font-size: 14px;
+      }
+      .chat-input-area button {
+        padding: 0 15px;
+        margin-left: 8px;
+        background: #0084ff;
+        color: white;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .chat-input-area button:hover {
+        background: #006ddc;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Khung chat HTML -->
+    <section class="chat-section">
+      <div class="chat-box" id="chatBox">
+        <div class="message received">
+          Xin chào! Hãy gõ tên trước nội dung chat nhé. <br />
+          Ví dụ: Trung: aloooo Tín
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input
+          type="text"
+          id="userInput"
+          placeholder="Nhập tin nhắn..."
+          autocomplete="off"
+        />
+        <button id="sendBtn">Gửi</button>
+      </div>
+    </section>
+
+    <!-- Phần xử lý JavaScript -->
+    <script>
+      const input = document.getElementById("userInput");
+      const button = document.getElementById("sendBtn");
+      const chatBox = document.getElementById("chatBox");
+
+      // Hàm thực hiện gửi tin nhắn
+      function sendMessage() {
+        const text = input.value.trim();
+
+        if (text !== "") {
+          // 1. Tạo thẻ div chứa tin nhắn mới
+          const msgDiv = document.createElement("div");
+          msgDiv.classList.add("message", "sent");
+          msgDiv.textContent = text;
+
+          // 2. Thêm vào hộp chat
+          chatBox.appendChild(msgDiv);
+
+          // 3. Xóa chữ trong ô nhập liệu
+          input.value = "";
+
+          // 4. Tự động cuộn xuống tin nhắn mới nhất
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }
+      }
+
+      // Sự kiện khi click vào nút Gửi
+      button.addEventListener("click", sendMessage);
+
+      // Sự kiện khi nhấn phím Enter trong ô nhập liệu
+      input.addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      });
+    </script>
+  </body>
+</html>
