@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Khung Chat Thử Nghiệm</title>
+    <title>Realtime Chat với Firebase</title>
     <style>
-      /* Phần CSS định dạng giao diện */
       body {
         font-family: Arial, sans-serif;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
         height: 100vh;
@@ -16,7 +16,7 @@
         background-color: #f0f2f5;
       }
       .chat-section {
-        width: 350px;
+        width: 380px;
         border: 1px solid #ccc;
         border-radius: 12px;
         display: flex;
@@ -26,7 +26,7 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
       .chat-box {
-        height: 350px;
+        height: 380px;
         padding: 15px;
         overflow-y: auto;
         background: #f9f9f9;
@@ -40,6 +40,13 @@
         max-width: 75%;
         word-wrap: break-word;
         font-size: 14px;
+        position: relative;
+      }
+      .message .sender-name {
+        font-size: 10px;
+        color: #777;
+        margin-bottom: 3px;
+        display: block;
       }
       .received {
         background: #e4e6eb;
@@ -63,7 +70,6 @@
         border: 1px solid #ddd;
         border-radius: 20px;
         outline: none;
-        font-size: 14px;
       }
       .chat-input-area button {
         padding: 0 15px;
@@ -75,20 +81,13 @@
         cursor: pointer;
         font-weight: bold;
       }
-      .chat-input-area button:hover {
-        background: #006ddc;
-      }
     </style>
   </head>
   <body>
-    <!-- Khung chat HTML -->
+    <h3 id="welcomeText">Đang thiết lập thông tin người dùng...</h3>
+
     <section class="chat-section">
-      <div class="chat-box" id="chatBox">
-        <div class="message received">
-          Xin chào! Hãy gõ tên trước nội dung chat nhé. <br />
-          Ví dụ: Trung: aloooo Tín
-        </div>
-      </div>
+      <div class="chat-box" id="chatBox"></div>
       <div class="chat-input-area">
         <input
           type="text"
@@ -100,41 +99,88 @@
       </div>
     </section>
 
-    <!-- Phần xử lý JavaScript -->
-    <script>
+    <!-- Tích hợp các module SDK Firebase thông qua CDN chính thức -->
+    <script type="module">
+      import { initializeApp } from "https://gstatic.com";
+      import {
+        getDatabase,
+        ref,
+        push,
+        onChildAdded,
+      } from "https://gstatic.com";
+
+      // ĐÃ ĐIỀN ĐOẠN MÃ CẤU HÌNH CỦA BẠN VÀO ĐÂY
+      const firebaseConfig = {
+        apiKey: "AIzaSyCGlxNbqYn512DfUYP_ob3MJURmAnxJ_ak",
+        authDomain: "mychatapp-df9b7.firebaseapp.com",
+        databaseURL:
+          "https://mychatapp-df9b7-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "mychatapp-df9b7",
+        storageBucket: "mychatapp-df9b7.firebasestorage.app",
+        messagingSenderId: "1005894182431",
+        appId: "1:1005894182431:web:8ce31a50e71bfb6336972a",
+        measurementId: "G-L65BK8J5ZY",
+      };
+
+      // Khởi tạo Firebase
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      const messagesRef = ref(database, "chats"); // Tạo thư mục lưu tin nhắn tên là 'chats'
+
+      // Hỏi tên người dùng khi vừa truy cập
+      let username = prompt(
+        "Nhập biệt danh của bạn để tham gia chat:",
+        "User_" + Math.floor(Math.random() * 1000),
+      );
+      if (!username || username.trim() === "") username = "Ẩn danh";
+      document.getElementById("welcomeText").textContent =
+        `Chào mừng, ${username}!`;
+
       const input = document.getElementById("userInput");
       const button = document.getElementById("sendBtn");
       const chatBox = document.getElementById("chatBox");
 
-      // Hàm thực hiện gửi tin nhắn
+      // Hàm gửi dữ liệu lên Firebase Server
       function sendMessage() {
         const text = input.value.trim();
-
         if (text !== "") {
-          // 1. Tạo thẻ div chứa tin nhắn mới
-          const msgDiv = document.createElement("div");
-          msgDiv.classList.add("message", "sent");
-          msgDiv.textContent = text;
-
-          // 2. Thêm vào hộp chat
-          chatBox.appendChild(msgDiv);
-
-          // 3. Xóa chữ trong ô nhập liệu
+          push(messagesRef, {
+            sender: username,
+            message: text,
+            timestamp: Date.now(),
+          });
           input.value = "";
-
-          // 4. Tự động cuộn xuống tin nhắn mới nhất
-          chatBox.scrollTop = chatBox.scrollHeight;
         }
       }
 
-      // Sự kiện khi click vào nút Gửi
       button.addEventListener("click", sendMessage);
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+      });
 
-      // Sự kiện khi nhấn phím Enter trong ô nhập liệu
-      input.addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
-          sendMessage();
+      // Lắng nghe tin nhắn mới để hiển thị thời gian thực
+      onChildAdded(messagesRef, (snapshot) => {
+        const data = snapshot.val();
+
+        const msgDiv = document.createElement("div");
+        msgDiv.classList.add("message");
+
+        const senderSpan = document.createElement("span");
+        senderSpan.classList.add("sender-name");
+        senderSpan.textContent = data.sender;
+        msgDiv.appendChild(senderSpan);
+
+        const textNode = document.createTextNode(data.message);
+        msgDiv.appendChild(textNode);
+
+        if (data.sender === username) {
+          msgDiv.classList.add("sent");
+        } else {
+          msgDiv.classList.add("received");
         }
+
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
       });
     </script>
   </body>
